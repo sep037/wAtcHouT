@@ -115,7 +115,7 @@ struct ContentView: View {
                 VStack {
                     Spacer()
                     
-                    Text("wAtcHouT ! 👀")
+                    Text("wAtcHouT !")
                         .font(.system(size: 50, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -144,6 +144,12 @@ struct ContentView: View {
                             .cornerRadius(35)
                     }
                     .padding(.bottom, 80) // 버튼을 위로 올림
+                    
+                    Image(systemName: "hand.raised.fill")
+                        .resizable()
+                        .frame(width: 100, height: 120)
+                        .foregroundColor(.green)
+                        .offset(x:0, y:-800)
                 }
             }
         }
@@ -154,4 +160,3 @@ struct ContentView: View {
         }
     }
 }
-
