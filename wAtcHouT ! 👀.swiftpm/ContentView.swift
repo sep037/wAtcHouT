@@ -3,7 +3,7 @@ import ARKit
 import CoreMotion
 
 struct ARFaceDistanceView: UIViewControllerRepresentable {
-    @Binding var faceDistance: CGFloat // 얼굴과 iPad의 거리를 감지하여 ContentView와 연결
+    @Binding var faceDistance: CGFloat // Connect with ContentView by detecting the distance between the face and iPad
     
     func makeUIViewController(context: Context) -> ARSessionViewController {
         return ARSessionViewController(faceDistance: $faceDistance)
@@ -12,11 +12,11 @@ struct ARFaceDistanceView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: ARSessionViewController, context: Context) {}
 }
 
-// ARKit의 얼굴 추적 기능을 활용하여 사용자의 얼굴과 기기 사이의 거리를 측정하는 UIViewController
+// UIViewController that leverages ARKit's face tracking capabilities to measure the distance between the user's face and the device
 class ARSessionViewController: UIViewController, ARSessionDelegate {
-    var session = ARSession() // ARkit 세션 객체
-    let motionManager = CMMotionManager() // iPad의 움직임을 감지하기 위한 CoreMotion 객체
-    @Binding var faceDistance: CGFloat // 얼굴 거리 값을 ContentView에 전달
+    var session = ARSession()
+    let motionManager = CMMotionManager() // CoreMotion objects for detecting the movement of iPad
+    @Binding var faceDistance: CGFloat // Pass face distance values to ContentView
     
     init(faceDistance: Binding<CGFloat>) {
         _faceDistance = faceDistance
@@ -25,7 +25,7 @@ class ARSessionViewController: UIViewController, ARSessionDelegate {
     
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
-    override func viewDidLoad() { // ARFaceTrackingConfiguration을 실행하여 얼굴 인식 시작
+    override func viewDidLoad() { // Start facial recognition by running ARFaceTracking Configuration
         super.viewDidLoad()
         
         view.backgroundColor = UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1.0)
@@ -34,10 +34,10 @@ class ARSessionViewController: UIViewController, ARSessionDelegate {
         session.delegate = self
         session.run(configuration)
         
-        startDeviceMotionUpdates() // iPad 움직임 감지 시작
+        startDeviceMotionUpdates() // Start detecting iPad movement
     }
     
-    //iPad가 흔들리거나 움직였을 때 감지
+    // Detects when the iPad shakes or moves
     func startDeviceMotionUpdates() {
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 0.5
@@ -45,9 +45,9 @@ class ARSessionViewController: UIViewController, ARSessionDelegate {
                 guard let motion = motion else { return }
                 
                 let acceleration = motion.userAcceleration
-                let threshold: Double = 0.2 // 움직임 감지 임계값
+                let threshold: Double = 0.2
                 
-                // 가속도(acceleration.x/y/z) 값이 0.2보다 크면 resetTracking() 실행
+                // Run resetTracking () if the acceleration (acceleration.x/y/z) value is greater than 0.2
                 if abs(acceleration.x) > threshold || abs(acceleration.y) > threshold || abs(acceleration.z) > threshold {
                     self.resetTracking()
                 }
@@ -60,18 +60,17 @@ class ARSessionViewController: UIViewController, ARSessionDelegate {
         session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
     }
     
-    // ARFaceAnchor의 transform.columns.3.z 값을 활용하여 얼굴과 iPad 사이 거리(단위: cm) 계산
     func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
         guard let faceAnchor = anchors.first as? ARFaceAnchor else { 
             DispatchQueue.main.async {
-                self.faceDistance = 50.0 // 얼굴을 놓치면 기본값으로 리셋
+                self.faceDistance = 50.0 // Reset to default
             }
             return
         }
         
         
         let transform = faceAnchor.transform
-        // ARKit의 좌표 시스템에서 z 값은 카메라를 향해 양수, 반대 방향으로 음수이므로 -100을 곱해 변환
+        // In ARKit's coordinate system, the z value is positive toward the camera, negative in the opposite direction, so multiply by -100 to convert
         let distanceValue = CGFloat(transform.columns.3.z * -100)
         DispatchQueue.main.async {
             self.faceDistance = distanceValue
@@ -80,9 +79,9 @@ class ARSessionViewController: UIViewController, ARSessionDelegate {
 }
 
 struct ContentView: View {
-    @State private var faceDistance: CGFloat = 50.0 // 얼굴 거리
-    @State private var isRippleAnimating = false // 파장 애니메이션 상태
-    @State private var isMonitoringStarted = false // 거리 측정 기능이 활성화 되었는지 여부
+    @State private var faceDistance: CGFloat = 50.0 // the distance of one's face
+    @State private var isRippleAnimating = false // Wavelength animation status
+    @State private var isMonitoringStarted = false // distance measurement
     
     // 거리 값에 따른 경고 색 설정
     func getWarningColor(for faceDistance: CGFloat) -> Color {
@@ -106,7 +105,6 @@ struct ContentView: View {
                 .edgesIgnoringSafeArea(.all)
             
             if isMonitoringStarted {
-                // 파장 애니메이션
                 Circle()
                     .stroke(getWarningColor(for: faceDistance).opacity(0.35), lineWidth: 5)
                     .frame(width: isRippleAnimating ? 400 : 300, height: isRippleAnimating ? 400 : 300)
@@ -117,12 +115,10 @@ struct ContentView: View {
                     .frame(width: isRippleAnimating ? 500 : 350, height: isRippleAnimating ? 500 : 350)
                     .animation(.easeOut(duration: max(0.5, min(2.0, faceDistance / 30))).repeatForever(autoreverses: false), value: isRippleAnimating)
                 
-                // 중앙 원 (경고 색상)
                 Circle()
                     .fill(getWarningColor(for: faceDistance))
                     .frame(width: 300, height: 300)
                 
-                // 뒤로 가기 버튼
                 VStack {
                     HStack {
                         Button(action: {
@@ -143,7 +139,6 @@ struct ContentView: View {
                     Spacer()
                 }
             } else {
-                // 시작 화면
                 VStack {
                     Spacer()
                     
@@ -181,7 +176,7 @@ struct ContentView: View {
                         .resizable()
                         .frame(width: 100, height: 120)
                         .foregroundColor(.green)
-                        .offset(x:0, y:-800)
+                        .offset(x:0, y:-750)
                 }
             }
         }
